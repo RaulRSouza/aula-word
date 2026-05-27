@@ -4,7 +4,7 @@ Atividade interativa para a aula de Microsoft Word (Seções 5.0 a 5.14).
 
 ## 🔗 Acesse a aula
 
-**[Clique aqui para abrir a aula](https://SEU-USUARIO.github.io/SEU-REPOSITORIO/)**
+**[Clique aqui para abrir a aula](https://raulrsouza.github.io/aula-word/)**
 
 ## 📋 Conteúdo
 
