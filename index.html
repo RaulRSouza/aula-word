@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula de Word — FUNDAT Informática Básica 2026</title>
+<style>
+:root{--blue:#1a6faf;--blue2:#2196f3;--green:#27ae60;--orange:#e67e22;--red:#e74c3c;--gray:#f4f6f8;--dark:#2c3e50;--card:#fff;--border:#dde3ea;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--gray);color:var(--dark);}
+/* LAYOUT */
+#app{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+/* SIDEBAR */
+#sidebar{background:var(--dark);color:#ecf0f1;padding:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+#sidebar-header{background:var(--blue);padding:20px 16px;text-align:center;}
+#sidebar-header h2{font-size:1.05rem;font-weight:700;color:#fff;line-height:1.3;}
+#sidebar-header p{font-size:.78rem;color:#b3d4f0;margin-top:4px;}
+.progress-bar-wrap{padding:14px 16px 10px;background:rgba(255,255,255,.05);}
+.progress-label{font-size:.75rem;color:#aaa;margin-bottom:6px;display:flex;justify-content:space-between;}
+.progress-bar{height:8px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--green);border-radius:4px;transition:.4s;}
+/* NAV */
+#nav{flex:1;padding:8px 0;}
+.nav-section{padding:6px 16px 2px;font-size:.68rem;text-transform:uppercase;color:#7f8c8d;letter-spacing:.08em;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:3px solid transparent;transition:.2s;font-size:.85rem;color:#bdc3c7;}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#ecf0f1;}
+.nav-item.active{background:rgba(33,150,243,.18);border-left-color:var(--blue2);color:#fff;}
+.nav-item.done .nav-check{color:var(--green);}
+.nav-check{font-size:.8rem;margin-left:auto;opacity:.7;}
+/* TIMER */
+#timer-bar{background:var(--blue);color:#fff;padding:10px 20px;display:flex;align-items:center;gap:16px;font-size:.85rem;position:sticky;top:0;z-index:10;}
+#timer-bar .t-section{font-weight:700;}
+#timer-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:.8rem;}
+#timer-btn:hover{background:rgba(255,255,255,.35);}
+#timer-display{font-family:monospace;font-size:1rem;font-weight:700;}
+/* MAIN */
+#main{padding:0;overflow-y:auto;}
+.section-view{display:none;padding:24px 32px 40px;}
+.section-view.active{display:block;}
+/* CARDS */
+.card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:22px 26px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.card h2{color:var(--blue);font-size:1.2rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card h3{color:var(--dark);font-size:1rem;margin:14px 0 8px;font-weight:600;}
+.card p{line-height:1.65;color:#444;margin-bottom:10px;font-size:.92rem;}
+.card ul{padding-left:20px;margin-bottom:10px;}
+.card ul li{line-height:1.7;font-size:.92rem;color:#444;}
+.card ul li strong{color:var(--dark);}
+.tag{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.72rem;font-weight:600;margin-right:4px;}
+.tag-blue{background:#dbeafe;color:#1d4ed8;}
+.tag-green{background:#dcfce7;color:#166534;}
+.tag-orange{background:#ffedd5;color:#c2410c;}
+.tag-red{background:#fee2e2;color:#b91c1c;}
+/* QUIZ */
+.quiz-card{border:2px solid #e2e8f0;}
+.quiz-title{font-size:1rem;color:var(--blue);font-weight:700;margin-bottom:16px;}
+.question{margin-bottom:20px;}
+.question p{font-weight:600;font-size:.93rem;margin-bottom:10px;}
+.options{display:flex;flex-direction:column;gap:8px;}
+.option{display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:.9rem;transition:.2s;background:#fff;}
+.option:hover{border-color:var(--blue2);background:#f0f7ff;}
+.option.correct{border-color:var(--green);background:#f0fdf4;color:#166534;}
+.option.wrong{border-color:var(--red);background:#fef2f2;color:#b91c1c;}
+.option.disabled{pointer-events:none;}
+.option input{accent-color:var(--blue2);}
+.feedback{margin-top:8px;padding:10px 14px;border-radius:8px;font-size:.88rem;font-weight:500;}
+.feedback.ok{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;}
+.feedback.nok{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+.quiz-submit{background:var(--blue);color:#fff;border:none;padding:10px 28px;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;margin-top:8px;}
+.quiz-submit:hover{background:#1558a0;}
+.quiz-submit:disabled{background:#94a3b8;cursor:default;}
+/* ACTIVITY */
+.activity-box{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:10px;padding:20px;margin-bottom:18px;}
+.activity-box h4{font-size:.95rem;font-weight:700;color:var(--dark);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.activity-instruction{font-size:.88rem;color:#555;margin-bottom:14px;line-height:1.6;}
+/* SHORTCUT GAME */
+.shortcut-game{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sc-item{padding:10px 14px;background:#fff;border:2px solid var(--border);border-radius:8px;font-size:.88rem;cursor:pointer;transition:.2s;text-align:center;}
+.sc-item:hover{border-color:var(--blue2);background:#eff6ff;}
+.sc-item.selected{border-color:var(--blue2);background:#dbeafe;}
+.sc-item.matched{border-color:var(--green);background:#f0fdf4;pointer-events:none;color:#166534;font-weight:600;}
+.sc-item.wrong-flash{border-color:var(--red);background:#fef2f2;}
+/* DRAG MATCH */
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.match-col h5{font-size:.82rem;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:10px;letter-spacing:.05em;}
+.drag-item{padding:9px 14px;background:#fff;border:2px solid var(--border);border-radius:8px;cursor:grab;font-size:.88rem;margin-bottom:8px;transition:.2s;}
+.drag-item:active{cursor:grabbing;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.drag-item.dragging{opacity:.5;}
+.drop-zone{min-height:44px;padding:8px 14px;background:#f8fafc;border:2px dashed #cbd5e1;border-radius:8px;font-size:.88rem;color:#94a3b8;margin-bottom:8px;transition:.2s;display:flex;align-items:center;}
+.drop-zone.over{border-color:var(--blue2);background:#eff6ff;}
+.drop-zone.filled{background:#f0fdf4;border-color:#86efac;color:var(--dark);}
+.drop-zone.error{background:#fef2f2;border-color:#fca5a5;color:var(--red);}
+/* CHECK BTN */
+.check-btn{background:var(--green);color:#fff;border:none;padding:10px 28px;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;margin-top:12px;}
+.check-btn:hover{background:#219150;}
+/* SCORE BADGE */
+.score-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:.85rem;font-weight:700;}
+.score-badge.great{background:#dcfce7;color:#166534;}
+.score-badge.ok{background:#fef9c3;color:#854d0e;}
+.score-badge.low{background:#fee2e2;color:#b91c1c;}
+/* INFO BOX */
+.info{background:#eff6ff;border-left:4px solid var(--blue2);padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:.88rem;color:#1e40af;line-height:1.6;}
+.warn{background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;font-size:.88rem;color:#92400e;line-height:1.6;}
+/* TABLE */
+.ap-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:12px 0;}
+.ap-table th{background:var(--blue);color:#fff;padding:8px 12px;text-align:left;}
+.ap-table td{padding:8px 12px;border-bottom:1px solid #e2e8f0;}
+.ap-table tr:nth-child(even) td{background:#f8fafc;}
+/* NEXT BTN */
+.next-btn{display:inline-block;margin-top:16px;background:var(--blue);color:#fff;padding:12px 32px;border-radius:8px;cursor:pointer;font-size:.95rem;font-weight:600;border:none;}
+.next-btn:hover{background:#1558a0;}
+/* FINAL */
+.final-score{text-align:center;padding:30px;}
+.final-score .big-score{font-size:4rem;font-weight:900;color:var(--blue);}
+.final-score h2{font-size:1.4rem;margin:8px 0;color:var(--dark);}
+/* WELCOME */
+.welcome-hero{background:linear-gradient(135deg,#1a6faf,#2196f3);color:#fff;padding:36px;border-radius:12px;margin-bottom:24px;}
+.welcome-hero h1{font-size:1.8rem;margin-bottom:10px;}
+.welcome-hero p{opacity:.9;line-height:1.6;font-size:.97rem;}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin:16px 0;}
+.module-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:.2s;}
+.module-card:hover{border-color:var(--blue2);box-shadow:0 2px 8px rgba(33,150,243,.15);}
+.module-card .mc-num{font-size:.75rem;font-weight:700;color:var(--blue2);margin-bottom:4px;}
+.module-card .mc-title{font-size:.88rem;font-weight:600;color:var(--dark);}
+.module-card .mc-time{font-size:.75rem;color:#64748b;margin-top:4px;}
+/* RESPONSIVE */
+@media(max-width:700px){
+  #app{grid-template-columns:1fr;}
+  #sidebar{height:auto;position:relative;}
+  .section-view{padding:14px 12px 30px;}
+  .shortcut-game{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <h2>Informática Básica<br>Microsoft Word</h2>
+    <p>FUNDAT — Aracaju 2026</p>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label"><span>Progresso</span><span id="prog-pct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+  <nav id="nav">
+    <div class="nav-section">Início</div>
+    <div class="nav-item active" data-sec="welcome" onclick="showSection('welcome')">🏠 <span>Bem-vindo</span><span class="nav-check" id="chk-welcome"></span></div>
+    <div class="nav-section">Módulos</div>
+    <div class="nav-item" data-sec="s50" onclick="showSection('s50')">📦 <span>5.0 Microsoft 365</span><span class="nav-check" id="chk-s50"></span></div>
+    <div class="nav-item" data-sec="s51" onclick="showSection('s51')">📝 <span>5.1 O Word</span><span class="nav-check" id="chk-s51"></span></div>
+    <div class="nav-item" data-sec="s52" onclick="showSection('s52')">🖥️ <span>5.2–5.4 Interface</span><span class="nav-check" id="chk-s52"></span></div>
+    <div class="nav-item" data-sec="s55" onclick="showSection('s55')">📂 <span>5.5 Guia Arquivo</span><span class="nav-check" id="chk-s55"></span></div>
+    <div class="nav-item" data-sec="s56" onclick="showSection('s56')">🅰️ <span>5.6 Página Inicial</span><span class="nav-check" id="chk-s56"></span></div>
+    <div class="nav-item" data-sec="s57" onclick="showSection('s57')">➕ <span>5.7 Guia Inserir</span><span class="nav-check" id="chk-s57"></span></div>
+    <div class="nav-item" data-sec="s58" onclick="showSection('s58')">📐 <span>5.8 Guia Layout</span><span class="nav-check" id="chk-s58"></span></div>
+    <div class="nav-item" data-sec="s59" onclick="showSection('s59')">📚 <span>5.9 Referências</span><span class="nav-check" id="chk-s59"></span></div>
+    <div class="nav-item" data-sec="s510" onclick="showSection('s510')">✉️ <span>5.10 Correspondências</span><span class="nav-check" id="chk-s510"></span></div>
+    <div class="nav-item" data-sec="s511" onclick="showSection('s511')">✅ <span>5.11 Guia Revisão</span><span class="nav-check" id="chk-s511"></span></div>
+    <div class="nav-item" data-sec="s512" onclick="showSection('s512')">👁️ <span>5.12 Guia Exibir</span><span class="nav-check" id="chk-s512"></span></div>
+    <div class="nav-item" data-sec="s513" onclick="showSection('s513')">⭐ <span>5.13–5.14 Extras & Atalhos</span><span class="nav-check" id="chk-s513"></span></div>
+    <div class="nav-section">Avaliação</div>
+    <div class="nav-item" data-sec="final" onclick="showSection('final')">🏆 <span>Avaliação Final</span><span class="nav-check" id="chk-final"></span></div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main id="main">
+  <div id="timer-bar">
+    <span>⏱️</span>
+    <span class="t-section" id="t-section-name">Bem-vindo</span>
+    <span style="margin-left:auto;font-size:.8rem;color:rgba(255,255,255,.75)">Tempo de aula:</span>
+    <span id="timer-display">00:00:00</span>
+    <button id="timer-btn" onclick="toggleTimer()">▶ Iniciar</button>
+  </div>
+
+  <!-- WELCOME -->
+  <div id="view-welcome" class="section-view active">
+    <div class="welcome-hero">
+      <h1>📘 Aula de Microsoft Word</h1>
+      <p>Bem-vindo(a) à aula de Informática Básica! Hoje você vai aprender o Microsoft Word do zero — da interface até os atalhos profissionais. A aula tem duração de <strong>4 horas</strong> e cada módulo traz teoria + atividade prática.</p>
+    </div>
+    <div class="card">
+      <h2>📋 O que você vai aprender hoje</h2>
+      <div class="module-grid">
+        <div class="module-card" onclick="showSection('s50')"><div class="mc-num">5.0 – 5.1</div><div class="mc-title">Microsoft 365 e Word</div><div class="mc-time">⏱ ~20 min</div></div>
+        <div class="module-card" onclick="showSection('s52')"><div class="mc-num">5.2 – 5.4</div><div class="mc-title">Interface e Janela</div><div class="mc-time">⏱ ~25 min</div></div>
+        <div class="module-card" onclick="showSection('s55')"><div class="mc-num">5.5</div><div class="mc-title">Guia Arquivo</div><div class="mc-time">⏱ ~20 min</div></div>
+        <div class="module-card" onclick="showSection('s56')"><div class="mc-num">5.6</div><div class="mc-title">Página Inicial (Fonte, Parágrafo)</div><div class="mc-time">⏱ ~35 min</div></div>
+        <div class="module-card" onclick="showSection('s57')"><div class="mc-num">5.7</div><div class="mc-title">Guia Inserir (Tabelas, Imagens)</div><div class="mc-time">⏱ ~35 min</div></div>
+        <div class="module-card" onclick="showSection('s58')"><div class="mc-num">5.8</div><div class="mc-title">Guia Layout</div><div class="mc-time">⏱ ~20 min</div></div>
+        <div class="module-card" onclick="showSection('s59')"><div class="mc-num">5.9</div><div class="mc-title">Guia Referências</div><div class="mc-time">⏱ ~20 min</div></div>
+        <div class="module-card" onclick="showSection('s510')"><div class="mc-num">5.10 – 5.11</div><div class="mc-title">Correspondências e Revisão</div><div class="mc-time">⏱ ~25 min</div></div>
+        <div class="module-card" onclick="showSection('s512')"><div class="mc-num">5.12 – 5.14</div><div class="mc-title">Exibir, Extras e Atalhos</div><div class="mc-time">⏱ ~30 min</div></div>
+        <div class="module-card" onclick="showSection('final')"><div class="mc-num">Final</div><div class="mc-title">Avaliação Final</div><div class="mc-time">⏱ ~20 min</div></div>
+      </div>
+      <div class="info">💡 <strong>Como usar:</strong> navegue pelo menu lateral, leia o conteúdo e complete as atividades de cada módulo. Clique em <strong>"Iniciar"</strong> no cronômetro acima para acompanhar o tempo da aula.</div>
+    </div>
+    <button class="next-btn" onclick="showSection('s50')">Começar →</button>
+  </div>
+
+  <!-- 5.0 MICROSOFT 365 -->
+  <div id="view-s50" class="section-view">
+    <div class="card">
+      <h2>📦 5.0 – Microsoft 365</h2>
+      <p>O <strong>Microsoft 365</strong> (antigamente Office 365) é uma suíte de produtividade em nuvem da Microsoft que inclui os aplicativos Word, Excel, PowerPoint, Outlook, Teams e outros.</p>
+      <h3>Principais vantagens:</h3>
+      <ul>
+        <li><strong>1 TB de armazenamento</strong> em nuvem (OneDrive)</li>
+        <li><strong>Versões premium</strong> de Word, Excel, PowerPoint e OneNote</li>
+        <li><strong>Colaboração em tempo real</strong> com outras pessoas</li>
+        <li><strong>Suporte técnico</strong> contínuo via chat ou telefone</li>
+        <li>Acesso de qualquer dispositivo (PC, tablet, celular)</li>
+      </ul>
+      <div class="warn">⚠️ <strong>Atenção:</strong> O Microsoft 365 é pago por assinatura anual. Existem alternativas gratuitas semelhantes, como o Google Docs e o LibreOffice.</div>
+    </div>
+
+    <div class="card">
+      <h2>📝 5.1 – O que é o Word?</h2>
+      <p>O <strong>Word</strong> é o processador de texto mais popular do mundo. Foi criado em 1983 por Richard Brodie para computadores IBM PC.</p>
+      <h3>Formatos de arquivo do Word:</h3>
+      <table class="ap-table">
+        <tr><th>Extensão</th><th>Descrição</th></tr>
+        <tr><td><strong>.docx</strong></td><td>Formato padrão atual (XML) — mais leve e seguro</td></tr>
+        <tr><td><strong>.doc</strong></td><td>Formato antigo (versão 2003 e anteriores)</td></tr>
+        <tr><td><strong>.docm</strong></td><td>Contém macro (VBA)</td></tr>
+        <tr><td><strong>.dotx</strong></td><td>Modelo de documento (carta, currículo etc.)</td></tr>
+        <tr><td><strong>.odt</strong></td><td>Formato do LibreOffice Writer</td></tr>
+        <tr><td><strong>.pdf</strong></td><td>Arquivo portátil — pode ser aberto e editado no Word</td></tr>
+        <tr><td><strong>.rtf</strong></td><td>Formato do WordPad</td></tr>
+      </table>
+      <div class="info">💡 O formato <strong>.docx</strong> é até 70% mais fácil de recuperar em caso de corrompimento do que o .doc!</div>
+    </div>
+
+    <!-- QUIZ 5.0-5.1 -->
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Seções 5.0 e 5.1</div>
+      <div id="quiz-s50"></div>
+      <button class="quiz-submit" id="btn-s50" onclick="checkQuiz('s50')">Verificar respostas</button>
+      <div id="result-s50" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s50');showSection('s52')">Próximo módulo →</button>
+  </div>
+
+  <!-- 5.2-5.4 INTERFACE -->
+  <div id="view-s52" class="section-view">
+    <div class="card">
+      <h2>🖥️ 5.2 – Interface do Word</h2>
+      <p>Ao abrir o Word, você verá uma tela inicial com documentos recentes à esquerda e modelos prontos à direita. Clique em <strong>Documento em branco</strong> para começar.</p>
+      <p>A interface usa o conceito de <strong>Faixa de Opções (Ribbon)</strong> — comandos organizados em <em>guias</em> (abas) e dentro das guias em <em>grupos</em>.</p>
+    </div>
+    <div class="card">
+      <h2>🔧 5.4 – Componentes da Janela</h2>
+      <table class="ap-table">
+        <tr><th>Componente</th><th>Onde fica</th><th>Para que serve</th></tr>
+        <tr><td><strong>Barra de Acesso Rápido</strong></td><td>Canto superior esquerdo</td><td>Salvar, Desfazer, Refazer (atalhos rápidos)</td></tr>
+        <tr><td><strong>Barra de Título</strong></td><td>Topo centro</td><td>Mostra o nome do arquivo e do programa</td></tr>
+        <tr><td><strong>Faixa de Opções</strong></td><td>Abaixo da barra de título</td><td>Todas as ferramentas organizadas em guias</td></tr>
+        <tr><td><strong>Régua</strong></td><td>Acima da área de texto</td><td>Configurar recuos e tabulações</td></tr>
+        <tr><td><strong>Área de Texto</strong></td><td>Centro</td><td>Onde você digita o documento</td></tr>
+        <tr><td><strong>Barra de Status</strong></td><td>Inferior esquerda</td><td>Número de páginas, palavras e idioma</td></tr>
+        <tr><td><strong>Barra de Zoom</strong></td><td>Inferior direita</td><td>Aumentar/diminuir visualização</td></tr>
+      </table>
+    </div>
+
+    <!-- ATIVIDADE: identificar componentes -->
+    <div class="card quiz-card">
+      <div class="quiz-title">🎯 Atividade — Identifique os Componentes</div>
+      <p style="font-size:.9rem;color:#555;margin-bottom:16px">Arraste cada componente para a sua descrição correta:</p>
+      <div id="match-s52"></div>
+      <button class="check-btn" onclick="checkMatch('s52')">✔ Verificar</button>
+      <div id="result-match-s52" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Interface e Componentes</div>
+      <div id="quiz-s52"></div>
+      <button class="quiz-submit" id="btn-s52" onclick="checkQuiz('s52')">Verificar respostas</button>
+      <div id="result-s52" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s52');showSection('s55')">Próximo módulo →</button>
+  </div>
+
+  <!-- 5.5 GUIA ARQUIVO -->
+  <div id="view-s55" class="section-view">
+    <div class="card">
+      <h2>📂 5.5 – Guia Arquivo</h2>
+      <p>A <strong>Guia Arquivo</strong> fica no canto superior esquerdo (botão azul/colorido). Ao clicar, aparece um menu com as principais operações de documento.</p>
+      <table class="ap-table">
+        <tr><th>Opção</th><th>O que faz</th></tr>
+        <tr><td><strong>Informações</strong></td><td>Mostra propriedades, proteção e gerenciamento do documento</td></tr>
+        <tr><td><strong>Novo</strong></td><td>Cria um documento em branco ou a partir de um modelo (.dotx)</td></tr>
+        <tr><td><strong>Abrir</strong></td><td>Abre documentos salvos (localmente ou no OneDrive)</td></tr>
+        <tr><td><strong>Salvar</strong></td><td>Salva o documento atual (atualiza o arquivo já existente)</td></tr>
+        <tr><td><strong>Salvar como</strong></td><td>Salva com novo nome, local ou formato diferente</td></tr>
+        <tr><td><strong>Imprimir</strong></td><td>Configura e imprime o documento</td></tr>
+        <tr><td><strong>Compartilhar</strong></td><td>Compartilha por e-mail, link ou apresentação online</td></tr>
+        <tr><td><strong>Conta</strong></td><td>Informações de usuário e temas do Word</td></tr>
+        <tr><td><strong>Opções</strong></td><td>Configurações avançadas do Word</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🖨️ Como imprimir páginas específicas</h3>
+      <ul>
+        <li>Para imprimir as páginas de 2 até 6: digite <strong>2-6</strong> (hífen)</li>
+        <li>Para imprimir apenas as páginas 2 e 6: digite <strong>2,6</strong> (vírgula)</li>
+      </ul>
+      <h3>🔄 Recuperar documento não salvo</h3>
+      <p>Acesse: <strong>Arquivo → Informações → Gerenciar Documentos → Recuperar Documentos Não Salvos</strong></p>
+      <div class="warn">⚠️ Salve seus documentos com frequência! Use o atalho <strong>CTRL + B</strong> para salvar rapidamente.</div>
+    </div>
+
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Guia Arquivo</div>
+      <div id="quiz-s55"></div>
+      <button class="quiz-submit" id="btn-s55" onclick="checkQuiz('s55')">Verificar respostas</button>
+      <div id="result-s55" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s55');showSection('s56')">Próximo módulo →</button>
+  </div>
+
+  <!-- 5.6 PÁGINA INICIAL -->
+  <div id="view-s56" class="section-view">
+    <div class="card">
+      <h2>🅰️ 5.6 – Guia Página Inicial</h2>
+      <p>É a guia mais usada! Contém formatação de texto, parágrafo, estilos e a área de transferência.</p>
+      <h3>📋 Grupo Área de Transferência</h3>
+      <table class="ap-table">
+        <tr><th>Botão</th><th>Atalho</th><th>Função</th></tr>
+        <tr><td>Colar</td><td>CTRL+V</td><td>Cola o item copiado/recortado</td></tr>
+        <tr><td>Recortar</td><td>CTRL+X</td><td>Remove e armazena temporariamente</td></tr>
+        <tr><td>Copiar</td><td>CTRL+C</td><td>Copia o item selecionado</td></tr>
+        <tr><td>Pincel de Formatação</td><td>CTRL+SHIFT+C/V</td><td>Copia e aplica formatação de um trecho para outro</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🔤 Grupo Fonte</h3>
+      <table class="ap-table">
+        <tr><th>Formatação</th><th>Atalho</th><th>Exemplo</th></tr>
+        <tr><td><strong>Negrito</strong></td><td>CTRL+N</td><td><strong>Texto em negrito</strong></td></tr>
+        <tr><td><em>Itálico</em></td><td>CTRL+I</td><td><em>Texto em itálico</em></td></tr>
+        <tr><td><u>Sublinhado</u></td><td>CTRL+S</td><td><u>Texto sublinhado</u></td></tr>
+        <tr><td><s>Tachado</s></td><td>—</td><td><s>Texto tachado</s></td></tr>
+        <tr><td>Subscrito</td><td>CTRL+=</td><td>H₂O</td></tr>
+        <tr><td>Sobrescrito</td><td>CTRL+SHIFT+=</td><td>10²</td></tr>
+        <tr><td>Cor do realce</td><td>—</td><td>Destaca como caneta marca-texto</td></tr>
+        <tr><td>Cor da fonte</td><td>—</td><td>Muda a cor da letra</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>¶ Grupo Parágrafo</h3>
+      <ul>
+        <li><strong>Alinhar à esquerda</strong> (CTRL+Q) — padrão</li>
+        <li><strong>Centralizar</strong> (CTRL+E) — títulos e cabeçalhos</li>
+        <li><strong>Alinhar à direita</strong> (CTRL+G) — datas, assinaturas</li>
+        <li><strong>Justificar</strong> (CTRL+J) — livros e documentos formais</li>
+        <li><strong>Listas com marcadores</strong> — tópicos com bolinhas</li>
+        <li><strong>Listas numeradas</strong> — tópicos com números</li>
+        <li><strong>Espaçamento entre linhas</strong> — 1,0 / 1,5 / 2,0</li>
+      </ul>
+      <div class="info">💡 O <strong>Pincel de Formatação</strong> é muito cobrado em concursos! Ele copia toda a formatação (fonte, tamanho, cor, negrito, etc.) de um trecho e aplica em outro.</div>
+    </div>
+
+    <!-- Atividade de formatação simulada -->
+    <div class="card activity-box">
+      <h4>✏️ Atividade Prática — Formatação de Texto</h4>
+      <p class="activity-instruction">No Word aberto em seu computador, siga os passos abaixo e marque cada um como concluído:</p>
+      <div id="checklist-s56"></div>
+    </div>
+
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Guia Página Inicial</div>
+      <div id="quiz-s56"></div>
+      <button class="quiz-submit" id="btn-s56" onclick="checkQuiz('s56')">Verificar respostas</button>
+      <div id="result-s56" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s56');showSection('s57')">Próximo módulo →</button>
+  </div>
+
+  <!-- 5.7 GUIA INSERIR -->
+  <div id="view-s57" class="section-view">
+    <div class="card">
+      <h2>➕ 5.7 – Guia Inserir</h2>
+      <p>Permite adicionar novos elementos ao documento: imagens, tabelas, gráficos, cabeçalhos, rodapés, links e muito mais.</p>
+      <h3>📄 Páginas</h3>
+      <ul>
+        <li><strong>Folha de Rosto</strong> — adiciona uma capa ao documento</li>
+        <li><strong>Página em Branco</strong> — insere uma página vazia em qualquer lugar</li>
+        <li><strong>Quebra de Página</strong> — força o texto a continuar na próxima página</li>
+      </ul>
+      <h3>📊 Tabelas</h3>
+      <ul>
+        <li>Clique em <strong>Inserir → Tabela</strong> e escolha o número de linhas e colunas</li>
+        <li>Ao inserir uma tabela, aparecem 2 guias extras: <strong>Design</strong> e <strong>Layout</strong></li>
+        <li>Você pode mesclar células, dividir células, inserir/excluir linhas e colunas</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🖼️ Grupo Ilustrações</h3>
+      <table class="ap-table">
+        <tr><th>Botão</th><th>Função</th></tr>
+        <tr><td>Imagens</td><td>Insere imagem do computador, rede ou pendrive</td></tr>
+        <tr><td>Imagens Online</td><td>Busca imagens na Web (Bing) ou no OneDrive</td></tr>
+        <tr><td>Formas</td><td>Inserir setas, linhas, retângulos e outras formas</td></tr>
+        <tr><td>SmartArt</td><td>Diagramas visuais (organogramas, fluxogramas, etc.)</td></tr>
+        <tr><td>Gráfico</td><td>Insere gráfico com dados do Excel</td></tr>
+        <tr><td>Captura de Tela</td><td>Captura um trecho da tela</td></tr>
+      </table>
+      <div class="info">💡 <strong>SmartArt</strong> tem sido muito cobrado em concursos! É usado para representar visualmente ideias e estruturas.</div>
+    </div>
+    <div class="card">
+      <h3>🔗 Cabeçalho, Rodapé e Links</h3>
+      <ul>
+        <li><strong>Cabeçalho</strong> — aparece no topo de todas as páginas (nome da empresa, logo, etc.)</li>
+        <li><strong>Rodapé</strong> — aparece no final de todas as páginas (numeração, data, etc.)</li>
+        <li><strong>Número de Página</strong> — insere numeração automática das páginas</li>
+        <li><strong>Hiperlink</strong> (CTRL+K) — cria link para página web, arquivo ou parte do documento</li>
+      </ul>
+      <h3>📝 Tabela — Operações Essenciais</h3>
+      <ul>
+        <li><strong>Inserir linha:</strong> Guia Layout → Inserir Abaixo/Acima</li>
+        <li><strong>Inserir coluna:</strong> Guia Layout → Inserir à Direita/Esquerda</li>
+        <li><strong>Excluir linha/coluna:</strong> botão direito → Excluir Linhas/Colunas</li>
+        <li><strong>Mesclar células:</strong> selecione → Guia Layout → Mesclar Células</li>
+        <li><strong>Dividir célula:</strong> Guia Layout → Dividir Células</li>
+      </ul>
+    </div>
+
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Guia Inserir</div>
+      <div id="quiz-s57"></div>
+      <button class="quiz-submit" id="btn-s57" onclick="checkQuiz('s57')">Verificar respostas</button>
+      <div id="result-s57" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s57');showSection('s58')">Próximo módulo →</button>
+  </div>
+
+  <!-- 5.8 LAYOUT -->
+  <div id="view-s58" class="section-view">
+    <div class="card">
+      <h2>📐 5.8 – Guia Layout</h2>
+      <p>Permite configurar a aparência da página: margens, orientação, tamanho, colunas, numeração de linhas e quebras.</p>
+      <h3>⚙️ Grupo Configurar Página</h3>
+      <table class="ap-table">
+        <tr><th>Opção</th><th>Função</th></tr>
+        <tr><td><strong>Margens</strong></td><td>Define as margens (normal, estreita, larga ou personalizada)</td></tr>
+        <tr><td><strong>Orientação</strong></td><td>Retrato (vertical) ou Paisagem (horizontal)</td></tr>
+        <tr><td><strong>Tamanho</strong></td><td>Escolhe o tamanho do papel (A4, Carta, Ofício, etc.)</td></tr>
+        <tr><td><strong>Colunas</strong></td><td>Divide o texto em 1, 2, 3 ou mais colunas (estilo jornal)</td></tr>
+        <tr><td><strong>Quebras</strong></td><td>Quebra de página, coluna ou seção</td></tr>
+        <tr><td><strong>Números de Linha</strong></td><td>Exibe números nas margens para referenciar linhas</td></tr>
+        <tr><td><strong>Hifenização</strong></td><td>Divide palavras longas automaticamente no fim da linha</td></tr>
+      </table>
+      <div class="info">💡 Para textos estilo <strong>jornal ou magazine</strong>, use o recurso <strong>Colunas</strong> da Guia Layout!</div>
+    </div>
+
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Guia Layout</div>
+      <div id="quiz-s58"></div>
+      <button class="quiz-submit" id="btn-s58" onclick="checkQuiz('s58')">Verificar respostas</button>
+      <div id="result-s58" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s58');showSection('s59')">Próximo módulo →</button>
+  </div>
+
+  <!-- 5.9 REFERÊNCIAS -->
+  <div id="view-s59" class="section-view">
+    <div class="card">
+      <h2>📚 5.9 – Guia Referências</h2>
+      <p>Guia exclusiva do Word para trabalhos acadêmicos (TCC, artigos, monografias). Permite inserir sumário, notas de rodapé, citações, bibliografias e legendas seguindo normas como a ABNT.</p>
+      <h3>📑 Principais Recursos</h3>
+      <table class="ap-table">
+        <tr><th>Recurso</th><th>Atalho</th><th>Função</th></tr>
+        <tr><td><strong>Sumário</strong></td><td>—</td><td>Gera automaticamente o sumário com base nos títulos (Estilos Título 1, 2, 3)</td></tr>
+        <tr><td><strong>Nota de Rodapé</strong></td><td>ALT+CTRL+F</td><td>Insere notas explicativas no rodapé da página</td></tr>
+        <tr><td><strong>Nota de Fim</strong></td><td>ALT+CTRL+D</td><td>Insere notas no final do documento</td></tr>
+        <tr><td><strong>Inserir Citação</strong></td><td>—</td><td>Cita livros, artigos e outras fontes bibliográficas</td></tr>
+        <tr><td><strong>Gerenciar Fontes</strong></td><td>—</td><td>Organiza todas as fontes bibliográficas usadas</td></tr>
+        <tr><td><strong>Bibliografia</strong></td><td>—</td><td>Gera a lista de referências bibliográficas</td></tr>
+        <tr><td><strong>Inserir Legenda</strong></td><td>—</td><td>Adiciona legenda (texto explicativo) abaixo de imagens e tabelas</td></tr>
+        <tr><td><strong>Referência Cruzada</strong></td><td>—</td><td>Referencia elementos internos ("Veja a Tabela 2", "Vá para a página 12")</td></tr>
+      </table>
+      <div class="info">💡 Para gerar um <strong>sumário automático</strong>, os títulos do texto precisam ter o estilo <strong>Título 1</strong>, <strong>Título 2</strong>, etc. aplicado (Guia Página Inicial → Estilos).</div>
+    </div>
+
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Guia Referências</div>
+      <div id="quiz-s59"></div>
+      <button class="quiz-submit" id="btn-s59" onclick="checkQuiz('s59')">Verificar respostas</button>
+      <div id="result-s59" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s59');showSection('s510')">Próximo módulo →</button>
+  </div>
+
+  <!-- 5.10 CORRESPONDÊNCIAS + 5.11 REVISÃO -->
+  <div id="view-s510" class="section-view">
+    <div class="card">
+      <h2>✉️ 5.10 – Guia Correspondências</h2>
+      <p>Permite criar e personalizar documentos de correspondência em massa: cartas, envelopes e etiquetas. Ideal para enviar a mesma carta para múltiplos destinatários com dados diferentes (Mala Direta).</p>
+      <ul>
+        <li>Criar listas de destinatários</li>
+        <li>Configurar campos automáticos (nome, endereço, etc.)</li>
+        <li>Imprimir envelopes e etiquetas em série</li>
+      </ul>
+      <div class="warn">⚠️ Com o aumento do e-mail e das mensagens eletrônicas, esta guia é menos usada atualmente, mas ainda é importante conhecê-la.</div>
+    </div>
+
+    <div class="card">
+      <h2>✅ 5.11 – Guia Revisão</h2>
+      <p>Ferramentas para revisar e colaborar no documento.</p>
+      <h3>📝 Grupo Revisão de Texto</h3>
+      <table class="ap-table">
+        <tr><th>Recurso</th><th>Atalho</th><th>Função</th></tr>
+        <tr><td><strong>Ortografia e Gramática</strong></td><td>F7</td><td>Verifica erros ortográficos e gramaticais</td></tr>
+        <tr><td><strong>Dicionário de Sinônimos</strong></td><td>SHIFT+F7</td><td>Sugere palavras com significado semelhante</td></tr>
+        <tr><td><strong>Contagem de Palavras</strong></td><td>—</td><td>Conta palavras, caracteres, parágrafos e linhas</td></tr>
+        <tr><td><strong>Traduzir</strong></td><td>—</td><td>Traduz palavras ou parágrafos para outro idioma</td></tr>
+        <tr><td><strong>Idioma</strong></td><td>—</td><td>Define o idioma para a revisão ortográfica</td></tr>
+      </table>
+      <h3>🔄 Controle de Alterações</h3>
+      <ul>
+        <li><strong>Controlar Alterações</strong> — registra todas as modificações feitas no documento (inserções, exclusões, formatações)</li>
+        <li><strong>Aceitar alteração</strong> — confirma uma mudança feita por um revisor</li>
+        <li><strong>Rejeitar alteração</strong> — desfaz uma mudança feita por um revisor</li>
+        <li><strong>Novo Comentário</strong> — adiciona uma observação sem alterar o texto</li>
+        <li><strong>Comparar</strong> — compara duas versões do mesmo documento</li>
+        <li><strong>Restringir Edição</strong> — protege o documento contra edições não autorizadas</li>
+      </ul>
+    </div>
+
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Correspondências e Revisão</div>
+      <div id="quiz-s510"></div>
+      <button class="quiz-submit" id="btn-s510" onclick="checkQuiz('s510')">Verificar respostas</button>
+      <div id="result-s510" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s510');showSection('s512')">Próximo módulo →</button>
+  </div>
+
+  <!-- 5.12 EXIBIR + 5.13 EXTRAS + 5.14 ATALHOS -->
+  <div id="view-s512" class="section-view">
+    <div class="card">
+      <h2>👁️ 5.12 – Guia Exibir</h2>
+      <p>Configura como o documento é visualizado na tela — o que mostrar, ocultar e como organizar as janelas.</p>
+      <h3>🖥️ Modos de Exibição</h3>
+      <table class="ap-table">
+        <tr><th>Modo</th><th>O que mostra</th></tr>
+        <tr><td><strong>Layout de Impressão</strong></td><td>Exibe como ficará na impressão. <em>Único modo que exibe a régua vertical!</em></td></tr>
+        <tr><td><strong>Modo de Leitura</strong></td><td>Maximiza a área de leitura — sem distrações</td></tr>
+        <tr><td><strong>Layout da Web</strong></td><td>Mostra como ficaria numa página da internet</td></tr>
+        <tr><td><strong>Estrutura de Tópicos</strong></td><td>Exibe o documento em hierarquia de títulos</td></tr>
+        <tr><td><strong>Rascunho</strong></td><td>Edição rápida — sem exibir imagens, cabeçalho ou rodapé</td></tr>
+      </table>
+      <h3>🔍 Outros Recursos</h3>
+      <ul>
+        <li><strong>Régua, Linhas de Grade, Painel de Navegação</strong> — exibir ou ocultar</li>
+        <li><strong>Zoom</strong> — ajustar o tamanho de exibição do documento</li>
+        <li><strong>Organizar Tudo</strong> — organiza as janelas de documentos abertos</li>
+        <li><strong>Dividir</strong> — divide a janela em dois painéis do mesmo documento</li>
+        <li><strong>Macros</strong> (ALT+F8) — grava sequências de ações para reutilizar</li>
+      </ul>
+      <div class="warn">⚠️ Macros podem conter vírus! Sempre desative macros ao baixar arquivos da internet.</div>
+    </div>
+
+    <div class="card">
+      <h2>⭐ 5.13 – Guias Extras (Contextuais)</h2>
+      <p>O Word exibe guias extras <em>automaticamente</em> dependendo do elemento selecionado:</p>
+      <table class="ap-table">
+        <tr><th>Elemento inserido</th><th>Guias extras exibidas</th></tr>
+        <tr><td>Tabela</td><td><strong>Design da Tabela</strong> + <strong>Layout</strong></td></tr>
+        <tr><td>Imagem</td><td><strong>Formato de Imagem</strong></td></tr>
+        <tr><td>Cabeçalho/Rodapé</td><td><strong>Ferramentas de Cabeçalho e Rodapé</strong></td></tr>
+        <tr><td>Estrutura de Tópicos</td><td><strong>Estrutura de Tópicos</strong></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>⌨️ 5.14 – Principais Teclas de Atalho</h2>
+      <table class="ap-table">
+        <tr><th>Atalho</th><th>Função</th><th>Atalho</th><th>Função</th></tr>
+        <tr><td>CTRL+C</td><td>Copiar</td><td>CTRL+V</td><td>Colar</td></tr>
+        <tr><td>CTRL+X</td><td>Recortar</td><td>CTRL+Z</td><td>Desfazer</td></tr>
+        <tr><td>CTRL+R</td><td>Refazer</td><td>CTRL+B</td><td>Salvar</td></tr>
+        <tr><td>CTRL+A</td><td>Abrir arquivo</td><td>CTRL+O</td><td>Novo arquivo</td></tr>
+        <tr><td>CTRL+N</td><td>Negrito</td><td>CTRL+I</td><td>Itálico</td></tr>
+        <tr><td>CTRL+S</td><td>Sublinhado</td><td>CTRL+L</td><td>Localizar</td></tr>
+        <tr><td>CTRL+Q</td><td>Alinhar à esquerda</td><td>CTRL+E</td><td>Centralizar</td></tr>
+        <tr><td>CTRL+J</td><td>Justificar</td><td>CTRL+G</td><td>Alinhar à direita</td></tr>
+        <tr><td>CTRL+P</td><td>Imprimir</td><td>ALT+F8</td><td>Macros</td></tr>
+        <tr><td>F7</td><td>Ortografia/Gramática</td><td>SHIFT+F7</td><td>Sinônimos</td></tr>
+        <tr><td>ALT+CTRL+F</td><td>Nota de Rodapé</td><td>CTRL+K</td><td>Hiperlink</td></tr>
+      </table>
+    </div>
+
+    <!-- JOGO DE ATALHOS -->
+    <div class="card activity-box">
+      <h4>🎮 Jogo — Conecte o Atalho à Função!</h4>
+      <p class="activity-instruction">Clique em um atalho (coluna esquerda) e depois na função correspondente (coluna direita). Acerte todos os pares!</p>
+      <div id="shortcut-game"></div>
+      <div id="shortcut-result" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card quiz-card">
+      <div class="quiz-title">🧠 Quiz — Exibir, Extras e Atalhos</div>
+      <div id="quiz-s512"></div>
+      <button class="quiz-submit" id="btn-s512" onclick="checkQuiz('s512')">Verificar respostas</button>
+      <div id="result-s512" style="margin-top:12px"></div>
+    </div>
+    <button class="next-btn" onclick="markDone('s512');showSection('final')">Ir para Avaliação Final →</button>
+  </div>
+
+  <!-- FINAL -->
+  <div id="view-final" class="section-view">
+    <div class="card">
+      <h2>🏆 Avaliação Final — Microsoft Word</h2>
+      <p>Parabéns por chegar até aqui! Esta avaliação cobre os pontos mais importantes de todos os módulos.</p>
+    </div>
+    <div class="card quiz-card">
+      <div class="quiz-title">📋 Avaliação Final — 20 questões</div>
+      <div id="quiz-final"></div>
+      <button class="quiz-submit" id="btn-final" onclick="checkFinal()">Enviar Avaliação</button>
+      <div id="result-final" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+// =============================================
+// DATA — QUIZZES
+// =============================================
+const QUIZZES = {
+  s50:[
+    {q:"Qual é o formato de arquivo padrão do Word atualmente?",opts:[".doc",".docx",".odt",".rtf"],ans:1},
+    {q:"O Microsoft 365 oferece quantos GB de armazenamento em nuvem pelo OneDrive?",opts:["100 GB","500 GB","1 TB","2 TB"],ans:2},
+    {q:"Qual formato do Word suporta macros (VBA)?",opts:[".docx",".dotx",".docm",".doc"],ans:2},
+    {q:"Qual das alternativas abaixo é um formato de arquivo portátil suportado pelo Word?",opts:[".xlsx",".pptx",".pdf",".csv"],ans:2},
+  ],
+  s52:[
+    {q:"Onde fica a Barra de Ferramentas de Acesso Rápido no Word?",opts:["Parte inferior da tela","Canto superior esquerdo","Centro da tela","Guia Exibir"],ans:1},
+    {q:"O que a Barra de Status (inferior esquerda) exibe?",opts:["O nome do arquivo","Número de páginas e palavras","As guias disponíveis","O zoom atual"],ans:1},
+    {q:"Como se chama o conjunto de abas com ferramentas no topo da janela do Word?",opts:["Menu Principal","Barra de Título","Faixa de Opções (Ribbon)","Painel de Tarefas"],ans:2},
+    {q:"Em qual modo de exibição a Régua Vertical é mostrada?",opts:["Rascunho","Modo de Leitura","Layout de Impressão","Layout da Web"],ans:2},
+  ],
+  s55:[
+    {q:"Qual opção do menu Arquivo é usada para salvar um documento com outro nome ou formato?",opts:["Salvar","Exportar","Salvar como","Compartilhar"],ans:2},
+    {q:"Para imprimir apenas as páginas 3, 5 e 7, o que deve ser digitado no campo de páginas?",opts:["3-5-7","3;5;7","3,5,7","3+5+7"],ans:2},
+    {q:"Onde encontramos a opção para recuperar documentos não salvos?",opts:["Arquivo → Abrir","Arquivo → Informações → Gerenciar Documentos","Arquivo → Opções","Arquivo → Conta"],ans:1},
+    {q:"Qual atalho salva o documento rapidamente?",opts:["CTRL+S","CTRL+B","CTRL+A","CTRL+G"],ans:1},
+  ],
+  s56:[
+    {q:"Qual atalho aplica Negrito ao texto selecionado?",opts:["CTRL+B","CTRL+N","CTRL+I","CTRL+S"],ans:1},
+    {q:"O que o Pincel de Formatação faz?",opts:["Pinta o fundo do parágrafo","Copia e aplica a formatação de um trecho para outro","Remove toda a formatação","Aplica estilo automático"],ans:1},
+    {q:"Qual atalho é usado para Justificar o texto?",opts:["CTRL+Q","CTRL+E","CTRL+J","CTRL+G"],ans:2},
+    {q:"O que é o Subscrito?",opts:["Texto acima da linha normal (ex: 10²)","Texto abaixo da linha normal (ex: H₂O)","Texto riscado","Texto em destaque amarelo"],ans:1},
+    {q:"Qual atalho é para Colar?",opts:["CTRL+X","CTRL+C","CTRL+V","CTRL+P"],ans:2},
+  ],
+  s57:[
+    {q:"Em qual guia do Word encontramos o botão para inserir uma Tabela?",opts:["Página Inicial","Layout","Inserir","Referências"],ans:2},
+    {q:"O que é o SmartArt?",opts:["Um tipo de gráfico do Excel","Uma ferramenta para inserir diagramas e organogramas visuais","Um estilo de tabela","Um formato de imagem"],ans:1},
+    {q:"Qual atalho insere um Hiperlink no documento?",opts:["CTRL+H","CTRL+K","CTRL+L","CTRL+M"],ans:1},
+    {q:"Ao inserir uma tabela, quais guias extras aparecem na Faixa de Opções?",opts:["Inserir e Layout","Design da Tabela e Layout","Referências e Revisão","Arquivo e Exibir"],ans:1},
+    {q:"Para excluir uma linha de tabela, o que deve ser feito?",opts:["Pressionar DELETE","Selecionar a linha → botão direito → Excluir Linhas","Ir em Layout → Remover","Usar Recortar (CTRL+X)"],ans:1},
+  ],
+  s58:[
+    {q:"Qual opção da Guia Layout configura o papel na posição horizontal?",opts:["Retrato","Paisagem","Margem","Colunas"],ans:1},
+    {q:"Para dividir um texto em colunas estilo jornal, qual recurso usar?",opts:["Guia Inserir → Texto","Guia Layout → Colunas","Guia Exibir → Dividir","Guia Revisão → Seções"],ans:1},
+    {q:"O que faz a Hifenização automática?",opts:["Insere hifens entre palavras compostas","Divide palavras longas no final da linha para melhor distribuição","Mescla duas células da tabela","Cria uma lista com marcadores"],ans:1},
+    {q:"Qual é o tamanho de papel mais comum no Brasil, usado como padrão no Word?",opts:["Carta","Ofício","A3","A4"],ans:3},
+  ],
+  s59:[
+    {q:"Para que serve o Sumário na Guia Referências?",opts:["Inserir imagens automáticas","Gerar automaticamente o índice de conteúdo do documento","Criar lista de figuras","Inserir marcadores"],ans:1},
+    {q:"Qual atalho insere uma Nota de Rodapé?",opts:["F7","SHIFT+F7","ALT+CTRL+F","CTRL+K"],ans:2},
+    {q:"O que é uma Referência Cruzada?",opts:["Um link para outro documento","Uma referência a elementos do mesmo documento (Veja Tabela 2, pág. 12)","Uma citação de livro externo","Um rodapé automático"],ans:1},
+    {q:"Qual guia é exclusiva do Word para trabalhos acadêmicos com normas ABNT?",opts:["Correspondências","Exibir","Referências","Revisão"],ans:2},
+  ],
+  s510:[
+    {q:"Qual atalho verifica Ortografia e Gramática?",opts:["F5","F7","F9","F12"],ans:1},
+    {q:"O que o recurso 'Controlar Alterações' faz?",opts:["Bloqueia o documento","Registra todas as modificações (inserções, exclusões, formatações)","Remove comentários","Compara dois documentos"],ans:1},
+    {q:"Qual atalho abre o Dicionário de Sinônimos?",opts:["F7","SHIFT+F7","ALT+F7","CTRL+F7"],ans:1},
+    {q:"Para que serve a Guia Correspondências?",opts:["Formatar cabeçalhos e rodapés","Criar documentos personalizados em série (cartas, etiquetas, envelopes)","Inserir símbolos e emojis","Verificar a gramática"],ans:1},
+  ],
+  s512:[
+    {q:"Em qual modo de exibição NÃO aparecem imagens e cabeçalhos?",opts:["Layout de Impressão","Modo de Leitura","Rascunho","Layout da Web"],ans:2},
+    {q:"Qual atalho abre o gerenciador de Macros?",opts:["ALT+F4","ALT+F8","CTRL+M","SHIFT+F9"],ans:1},
+    {q:"Ao inserir uma imagem no Word, qual guia extra aparece?",opts:["Design","Inserir Imagem","Formato de Imagem","Ferramentas de Imagem"],ans:2},
+    {q:"O que o recurso 'Dividir' na Guia Exibir faz?",opts:["Divide o documento em dois arquivos separados","Divide a janela para ver duas partes do mesmo documento simultaneamente","Divide o texto em colunas","Separa os comentários"],ans:1},
+    {q:"Em qual único modo de exibição a Régua Vertical é mostrada?",opts:["Modo de Leitura","Layout da Web","Rascunho","Layout de Impressão"],ans:3},
+  ],
+};
+
+const FINAL_QUIZ = [
+  {q:"Qual formato de arquivo do Word é mais seguro e ocupa menos espaço?",opts:[".doc",".docx",".rtf",".odt"],ans:1},
+  {q:"Onde ficam os botões Salvar, Desfazer e Refazer para acesso rápido?",opts:["Guia Arquivo","Barra de Status","Barra de Ferramentas de Acesso Rápido","Guia Página Inicial"],ans:2},
+  {q:"Qual atalho COPIA o conteúdo selecionado?",opts:["CTRL+X","CTRL+V","CTRL+C","CTRL+Z"],ans:2},
+  {q:"Na Guia Inserir, qual recurso permite inserir diagramas visuais como organogramas?",opts:["Gráfico","SmartArt","Formas","Captura de Tela"],ans:1},
+  {q:"Para mudar a orientação da página para 'Paisagem', em qual guia devo ir?",opts:["Inserir","Revisão","Layout","Página Inicial"],ans:2},
+  {q:"Qual atalho da Guia Revisão verifica a Ortografia e Gramática?",opts:["F5","F7","F9","F12"],ans:1},
+  {q:"O que é o Pincel de Formatação?",opts:["Pinta o texto de amarelo","Copia a formatação de um trecho e aplica em outro","Remove todas as formatações","Aplica negrito e itálico automaticamente"],ans:1},
+  {q:"Para inserir uma Nota de Rodapé, devo ir à guia:",opts:["Inserir","Revisão","Layout","Referências"],ans:3},
+  {q:"Qual tecla de atalho SALVA o documento?",opts:["CTRL+S","CTRL+A","CTRL+B","CTRL+P"],ans:2},
+  {q:"O que aparece na Barra de Status do Word?",opts:["Lista de arquivos recentes","Número de páginas, palavras e idioma","Ferramentas de formatação","Opções de impressão"],ans:1},
+  {q:"Qual recurso da Guia Exibir é usado para registrar ações repetitivas?",opts:["Zoom","Macro","Painel de Navegação","Dividir"],ans:1},
+  {q:"Para criar um documento de carta para vários destinatários automaticamente, uso a guia:",opts:["Revisão","Referências","Correspondências","Inserir"],ans:2},
+  {q:"Qual atalho aplica ITÁLICO ao texto?",opts:["CTRL+N","CTRL+I","CTRL+S","CTRL+T"],ans:1},
+  {q:"Na Guia Layout, o que faz a opção 'Colunas'?",opts:["Insere uma tabela","Divide o texto em múltiplas colunas (estilo jornal)","Oculta colunas da tabela","Configura as margens"],ans:1},
+  {q:"O recurso 'Controlar Alterações' está na guia:",opts:["Inserir","Layout","Correspondências","Revisão"],ans:3},
+  {q:"Qual é o atalho para abrir um novo arquivo em branco?",opts:["CTRL+A","CTRL+N","CTRL+O","CTRL+B"],ans:2},
+  {q:"Ao inserir uma TABELA no Word, quais guias contextuais aparecem?",opts:["Inserir e Referências","Formato e Exibir","Design da Tabela e Layout","Cabeçalho e Rodapé"],ans:2},
+  {q:"Para imprimir as páginas de 4 até 8, o que se deve digitar no campo de páginas?",opts:["4+8","4;8","4,8","4-8"],ans:3},
+  {q:"O que é o Subscrito? Exemplo de uso:",opts:["Texto acima da linha — para expoentes (10²)","Texto abaixo da linha — para fórmulas químicas (H₂O)","Texto com tachado","Texto colorido"],ans:1},
+  {q:"Na Guia Referências, para que serve o 'Sumário'?",opts:["Inserir imagens no início do texto","Gerar automaticamente o índice de conteúdo baseado nos títulos","Criar lista de figuras","Inserir cabeçalho"],ans:1},
+];
+
+// =============================================
+// STATE
+// =============================================
+let done = JSON.parse(localStorage.getItem('word-done')||'{}');
+let scores = JSON.parse(localStorage.getItem('word-scores')||'{}');
+let timerInterval = null, timerSecs = 0, timerRunning = false;
+
+// =============================================
+// RENDER QUIZZES
+// =============================================
+function renderQuiz(id, questions){
+  const el = document.getElementById('quiz-'+id);
+  if(!el) return;
+  let html='';
+  questions.forEach((q,qi)=>{
+    html+=`<div class="question" id="q-${id}-${qi}"><p>${qi+1}. ${q.q}</p><div class="options">`;
+    q.opts.forEach((o,oi)=>{
+      html+=`<label class="option" id="opt-${id}-${qi}-${oi}"><input type="radio" name="q${id}${qi}" value="${oi}"> ${o}</label>`;
+    });
+    html+=`</div><div class="feedback" id="fb-${id}-${qi}" style="display:none"></div></div>`;
+  });
+  el.innerHTML=html;
+}
+
+function checkQuiz(id){
+  const questions = QUIZZES[id];
+  let correct=0;
+  questions.forEach((q,qi)=>{
+    const sel = document.querySelector(`input[name="q${id}${qi}"]:checked`);
+    const fb = document.getElementById(`fb-${id}-${qi}`);
+    // disable all options
+    q.opts.forEach((_,oi)=>{
+      const opt = document.getElementById(`opt-${id}-${qi}-${oi}`);
+      opt.classList.add('disabled');
+    });
+    if(sel){
+      const chosen = parseInt(sel.value);
+      const optEl = document.getElementById(`opt-${id}-${qi}-${chosen}`);
+      if(chosen===q.ans){
+        correct++;
+        optEl.classList.add('correct');
+        fb.className='feedback ok';
+        fb.textContent='✅ Correto!';
+      } else {
+        optEl.classList.add('wrong');
+        fb.className='feedback nok';
+        fb.textContent=`❌ Incorreto. A resposta certa é: "${q.opts[q.ans]}"`;
+        document.getElementById(`opt-${id}-${qi}-${q.ans}`).classList.add('correct');
+      }
+    } else {
+      fb.className='feedback nok';
+      fb.textContent=`❌ Não respondido. A resposta certa é: "${q.opts[q.ans]}"`;
+      document.getElementById(`opt-${id}-${qi}-${q.ans}`).classList.add('correct');
+    }
+    fb.style.display='block';
+  });
+  const pct = Math.round(correct/questions.length*100);
+  scores[id]=pct;
+  localStorage.setItem('word-scores',JSON.stringify(scores));
+  const res = document.getElementById('result-'+id);
+  let cls = pct>=80?'great':pct>=60?'ok':'low';
+  res.innerHTML=`<span class="score-badge ${cls}">${pct>=80?'🏆':pct>=60?'👍':'📚'} Você acertou ${correct}/${questions.length} (${pct}%)</span>`;
+  document.getElementById('btn-'+id).disabled=true;
+  if(pct>=60) markDone(id);
+}
+
+// =============================================
+// FINAL QUIZ
+// =============================================
+function renderFinal(){
+  const el = document.getElementById('quiz-final');
+  if(!el) return;
+  let html='';
+  FINAL_QUIZ.forEach((q,qi)=>{
+    html+=`<div class="question" id="qf-${qi}"><p>${qi+1}. ${q.q}</p><div class="options">`;
+    q.opts.forEach((o,oi)=>{
+      html+=`<label class="option" id="optf-${qi}-${oi}"><input type="radio" name="qf${qi}" value="${oi}"> ${o}</label>`;
+    });
+    html+=`</div><div class="feedback" id="fbf-${qi}" style="display:none"></div></div>`;
+  });
+  el.innerHTML=html;
+}
+
+function checkFinal(){
+  let correct=0;
+  FINAL_QUIZ.forEach((q,qi)=>{
+    const sel=document.querySelector(`input[name="qf${qi}"]:checked`);
+    const fb=document.getElementById(`fbf-${qi}`);
+    q.opts.forEach((_,oi)=>{
+      document.getElementById(`optf-${qi}-${oi}`).classList.add('disabled');
+    });
+    if(sel){
+      const chosen=parseInt(sel.value);
+      const optEl=document.getElementById(`optf-${qi}-${chosen}`);
+      if(chosen===q.ans){correct++;optEl.classList.add('correct');fb.className='feedback ok';fb.textContent='✅ Correto!';}
+      else{optEl.classList.add('wrong');fb.className='feedback nok';fb.textContent=`❌ Incorreto. Resposta: "${q.opts[q.ans]}"`;document.getElementById(`optf-${qi}-${q.ans}`).classList.add('correct');}
+    } else {fb.className='feedback nok';fb.textContent=`❌ Não respondido. Resposta: "${q.opts[q.ans]}"`;document.getElementById(`optf-${qi}-${q.ans}`).classList.add('correct');}
+    fb.style.display='block';
+  });
+  const pct=Math.round(correct/FINAL_QUIZ.length*100);
+  scores['final']=pct;
+  localStorage.setItem('word-scores',JSON.stringify(scores));
+  markDone('final');
+  const res=document.getElementById('result-final');
+  let msg='';
+  if(pct>=90) msg='🏆 Excelente! Você dominou o conteúdo de Word!';
+  else if(pct>=70) msg='👍 Muito bom! Continue praticando para se aperfeiçoar.';
+  else if(pct>=50) msg='📚 Aprovado! Mas revise os módulos com menor pontuação.';
+  else msg='🔄 Continue estudando! Reveja os módulos e tente novamente.';
+  res.innerHTML=`<div class="final-score"><div class="big-score">${pct}%</div><h2>${msg}</h2><p>Você acertou <strong>${correct} de ${FINAL_QUIZ.length}</strong> questões.</p></div>`;
+  document.getElementById('btn-final').disabled=true;
+  updateProgress();
+}
+
+// =============================================
+// MATCH ACTIVITY (5.2-5.4)
+// =============================================
+const MATCH_S52 = {
+  items:['Barra de Acesso Rápido','Barra de Status','Faixa de Opções','Barra de Título'],
+  targets:['Mostra páginas, palavras e idioma — parte inferior esquerda','Salvar, Desfazer e Refazer — canto superior esquerdo','Contém as guias com todos os comandos — abaixo do título','Nome do arquivo e botões Minimizar/Fechar — topo central'],
+  correct:[1,0,3,2]
+};
+
+function renderMatch(id){
+  if(id!=='s52') return;
+  const d=MATCH_S52;
+  const el=document.getElementById('match-'+id);
+  if(!el) return;
+  let shuffled=[...d.items].sort(()=>Math.random()-.5);
+  let html=`<div class="match-grid"><div><div class="match-col"><h5>Componente</h5>`;
+  d.targets.forEach((t,i)=>{
+    html+=`<div class="drop-zone" id="dz-${id}-${i}" data-idx="${i}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropItem(event,'${id}',${i})">${t}</div>`;
+  });
+  html+=`</div></div><div><div class="match-col"><h5>Definição — arraste para a esquerda</h5>`;
+  shuffled.forEach((item,i)=>{
+    const realIdx=d.items.indexOf(item);
+    html+=`<div class="drag-item" draggable="true" id="drag-${id}-${realIdx}" data-real="${realIdx}" ondragstart="dragStart(event,'${id}',${realIdx})">${item}</div>`;
+  });
+  html+=`</div></div></div>`;
+  el.innerHTML=html;
+}
+
+let dragData={};
+function dragStart(e,id,idx){e.dataTransfer.setData('text/plain',`${id}|${idx}`);dragData={id,idx};}
+function dropItem(e,id,zoneIdx){
+  e.preventDefault();
+  const zone=document.getElementById(`dz-${id}-${zoneIdx}`);
+  zone.classList.remove('over');
+  const [did,didx]=e.dataTransfer.getData('text/plain').split('|');
+  const itemEl=document.getElementById(`drag-${did}-${didx}`);
+  zone.dataset.placed=didx;
+  zone.classList.add('filled');
+  zone.innerHTML=`<strong>${MATCH_S52.items[didx]}</strong> <span style="font-size:.8rem;color:#64748b">← confirme abaixo</span>`;
+  itemEl.style.opacity='.4';
+}
+function checkMatch(id){
+  if(id!=='s52') return;
+  let ok=0;
+  MATCH_S52.targets.forEach((_,i)=>{
+    const zone=document.getElementById(`dz-s52-${i}`);
+    const placed=parseInt(zone.dataset.placed??'-1');
+    if(placed===MATCH_S52.correct[i]){ok++;zone.classList.remove('filled','error');zone.classList.add('filled');zone.innerHTML=`✅ <strong>${MATCH_S52.items[placed]}</strong>`;}
+    else if(placed>=0){zone.classList.add('error');zone.innerHTML=`❌ ${MATCH_S52.items[placed]} — Errado!`;}
+  });
+  const res=document.getElementById('result-match-s52');
+  res.innerHTML=`<span class="score-badge ${ok===4?'great':ok>=2?'ok':'low'}">${ok===4?'🏆':'📚'} ${ok}/4 corretos</span>`;
+}
+
+// =============================================
+// SHORTCUT GAME (5.12-5.14)
+// =============================================
+const SC_PAIRS=[
+  {key:'CTRL+C',func:'Copiar'},
+  {key:'CTRL+V',func:'Colar'},
+  {key:'CTRL+Z',func:'Desfazer'},
+  {key:'CTRL+B',func:'Salvar'},
+  {key:'CTRL+N',func:'Negrito'},
+  {key:'CTRL+I',func:'Itálico'},
+  {key:'CTRL+S',func:'Sublinhado'},
+  {key:'F7',func:'Ortografia e Gramática'},
+];
+let scSelected=null, scMatched=new Set(), scWrong=0;
+
+function renderShortcutGame(){
+  const el=document.getElementById('shortcut-game');
+  if(!el) return;
+  const keys=SC_PAIRS.map(p=>p.key).sort(()=>Math.random()-.5);
+  const funcs=SC_PAIRS.map(p=>p.func).sort(()=>Math.random()-.5);
+  let html='<div class="shortcut-game" id="sc-keys">';
+  keys.forEach(k=>{ html+=`<div class="sc-item" id="sc-k-${k.replace(/\+/g,'')}" onclick="scClick('key','${k}')">${k}</div>`; });
+  html+='</div><div style="margin:6px 0;text-align:center;font-size:.8rem;color:#64748b">▲ Atalhos &nbsp;|&nbsp; Funções ▼</div><div class="shortcut-game" id="sc-funcs">';
+  funcs.forEach(f=>{ html+=`<div class="sc-item" id="sc-f-${f.replace(/\s/g,'_')}" onclick="scClick('func','${f}')">${f}</div>`; });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function scClick(type, val){
+  if(!scSelected){
+    scSelected={type,val};
+    const elId=type==='key'?`sc-k-${val.replace(/\+/g,'')}`:val.replace(/\s/g,'_');
+    document.getElementById(type==='key'?`sc-k-${val.replace(/\+/g,'')}`:`sc-f-${val.replace(/\s/g,'_')}`).classList.add('selected');
+    return;
+  }
+  if(scSelected.type===type){
+    document.getElementById(scSelected.type==='key'?`sc-k-${scSelected.val.replace(/\+/g,'')}`:`sc-f-${scSelected.val.replace(/\s/g,'_')}`).classList.remove('selected');
+    scSelected={type,val};
+    document.getElementById(type==='key'?`sc-k-${val.replace(/\+/g,'')}`:`sc-f-${val.replace(/\s/g,'_')}`).classList.add('selected');
+    return;
+  }
+  const key=scSelected.type==='key'?scSelected.val:val;
+  const func=scSelected.type==='func'?scSelected.val:val;
+  const pair=SC_PAIRS.find(p=>p.key===key&&p.func===func);
+  const keyEl=document.getElementById(`sc-k-${key.replace(/\+/g,'')}`);
+  const funcEl=document.getElementById(`sc-f-${func.replace(/\s/g,'_')}`);
+  if(pair){
+    keyEl.classList.remove('selected');keyEl.classList.add('matched');
+    funcEl.classList.remove('selected');funcEl.classList.add('matched');
+    scMatched.add(key);
+    if(scMatched.size===SC_PAIRS.length){
+      document.getElementById('shortcut-result').innerHTML=`<span class="score-badge great">🏆 Parabéns! Você acertou todos os pares!</span>`;
+    }
+  } else {
+    scWrong++;
+    keyEl.classList.add('wrong-flash');funcEl.classList.add('wrong-flash');
+    setTimeout(()=>{keyEl.classList.remove('wrong-flash','selected');funcEl.classList.remove('wrong-flash','selected');},700);
+  }
+  scSelected=null;
+}
+
+// =============================================
+// CHECKLIST (5.6)
+// =============================================
+const CHECKLIST_S56=[
+  "1. Abra o Word e crie um Documento em Branco",
+  "2. Digite: 'Meu primeiro documento no Word'",
+  "3. Selecione todo o texto (CTRL+A) e aplique Negrito (CTRL+N)",
+  "4. Centralize o texto (CTRL+E)",
+  "5. Mude o tamanho da fonte para 16",
+  "6. Selecione apenas a palavra 'primeiro' e aplique Itálico (CTRL+I)",
+  "7. Selecione 'Word' e mude a cor da fonte para azul",
+  "8. Aplique Sublinhado (CTRL+S) na palavra 'documento'",
+  "9. Adicione uma nova linha e escreva uma lista com 3 itens usando Lista com Marcadores",
+  "10. Salve o arquivo (CTRL+B) com o nome 'pratica-word'",
+];
+
+function renderChecklist(){
+  const el=document.getElementById('checklist-s56');
+  if(!el) return;
+  let html='';
+  CHECKLIST_S56.forEach((item,i)=>{
+    const key=`cl-s56-${i}`;
+    const checked=localStorage.getItem(key)?'checked':'';
+    html+=`<label style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #e2e8f0;cursor:pointer;font-size:.9rem;color:#374151">
+      <input type="checkbox" ${checked} onchange="saveCheck('${key}',this.checked)" style="width:16px;height:16px;margin-top:2px;accent-color:var(--green)">
+      <span>${item}</span>
+    </label>`;
+  });
+  el.innerHTML=html;
+}
+
+function saveCheck(key,val){localStorage.setItem(key,val?'1':'');}
+
+// =============================================
+// PROGRESS & NAVIGATION
+// =============================================
+const SECTIONS=['welcome','s50','s52','s55','s56','s57','s58','s59','s510','s512','final'];
+
+function markDone(id){
+  done[id]=true;
+  localStorage.setItem('word-done',JSON.stringify(done));
+  const chk=document.getElementById('chk-'+id);
+  if(chk){chk.textContent='✓';chk.style.color='#27ae60';}
+  const navItem=document.querySelector(`.nav-item[data-sec="${id}"]`);
+  if(navItem) navItem.classList.add('done');
+  updateProgress();
+}
+
+function updateProgress(){
+  const total=SECTIONS.length;
+  const doneCount=SECTIONS.filter(s=>done[s]).length;
+  const pct=Math.round(doneCount/total*100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-pct').textContent=pct+'%';
+}
+
+function showSection(id){
+  document.querySelectorAll('.section-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  document.querySelector(`.nav-item[data-sec="${id}"]`).classList.add('active');
+  document.getElementById('t-section-name').textContent=document.querySelector(`.nav-item[data-sec="${id}"] span`).textContent;
+  document.getElementById('main').scrollTop=0;
+}
+
+// =============================================
+// TIMER
+// =============================================
+function toggleTimer(){
+  if(timerRunning){
+    clearInterval(timerInterval);timerRunning=false;
+    document.getElementById('timer-btn').textContent='▶ Continuar';
+  } else {
+    timerInterval=setInterval(()=>{timerSecs++;updateTimerDisplay();},1000);
+    timerRunning=true;
+    document.getElementById('timer-btn').textContent='⏸ Pausar';
+  }
+}
+function updateTimerDisplay(){
+  const h=Math.floor(timerSecs/3600).toString().padStart(2,'0');
+  const m=Math.floor((timerSecs%3600)/60).toString().padStart(2,'0');
+  const s=(timerSecs%60).toString().padStart(2,'0');
+  document.getElementById('timer-display').textContent=`${h}:${m}:${s}`;
+}
+
+// =============================================
+// INIT
+// =============================================
+document.addEventListener('DOMContentLoaded',()=>{
+  // Render all quizzes
+  Object.keys(QUIZZES).forEach(id=>renderQuiz(id,QUIZZES[id]));
+  renderFinal();
+  renderMatch('s52');
+  renderChecklist();
+  renderShortcutGame();
+  // Restore done state
+  Object.keys(done).forEach(id=>{
+    const chk=document.getElementById('chk-'+id);
+    if(chk){chk.textContent='✓';chk.style.color='#27ae60';}
+    const navItem=document.querySelector(`.nav-item[data-sec="${id}"]`);
+    if(navItem) navItem.classList.add('done');
+  });
+  updateProgress();
+});
+</script>
+</body>
+</html>
