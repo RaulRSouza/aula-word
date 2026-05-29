@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defensor Digital — Jogo de Atalhos</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+#c {
+  display: block;
+  border: 2px solid rgba(59,130,246,.3);
+  border-radius: 10px;
+  box-shadow: 0 0 40px rgba(59,130,246,.2);
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ─── CANVAS SETUP ───────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const W = 920, H = 600;
+canvas.width  = W;
+canvas.height = H;
+
+// Scale to fit window
+function resize() {
+  const scale = Math.min(window.innerWidth / (W+20), window.innerHeight / (H+20));
+  canvas.style.width  = W * scale + 'px';
+  canvas.style.height = H * scale + 'px';
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── SHORTCUT DATA ──────────────────────────────────────────────────────────
+const SC = [
+  // Básicos
+  { label:'Copiar',           keys:'Ctrl+C',         color:'#3b82f6', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='c' },
+  { label:'Colar',            keys:'Ctrl+V',         color:'#8b5cf6', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='v' },
+  { label:'Recortar',         keys:'Ctrl+X',         color:'#ec4899', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='x' },
+  { label:'Desfazer',         keys:'Ctrl+Z',         color:'#f59e0b', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='z' },
+  { label:'Refazer',          keys:'Ctrl+Shift+Z',   color:'#10b981', match:e=>e.ctrlKey&&e.shiftKey&&e.key.toLowerCase()==='z' },
+  { label:'Selecionar Tudo',  keys:'Ctrl+A',         color:'#06b6d4', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='a' },
+  { label:'Salvar',           keys:'Ctrl+S',         color:'#22c55e', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='s' },
+  { label:'Buscar',           keys:'Ctrl+F',         color:'#f97316', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='f' },
+  { label:'Novo Arquivo',     keys:'Ctrl+N',         color:'#a78bfa', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='n' },
+  { label:'Imprimir',         keys:'Ctrl+P',         color:'#64748b', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='p' },
+  // Navegador
+  { label:'Nova Aba',         keys:'Ctrl+T',         color:'#34d399', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='t' },
+  { label:'Fechar Aba',       keys:'Ctrl+W',         color:'#fb7185', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='w' },
+  { label:'Atualizar Página', keys:'Ctrl+R',         color:'#38bdf8', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='r' },
+  { label:'Favoritar Página', keys:'Ctrl+D',         color:'#fbbf24', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='d' },
+  { label:'Ver Histórico',    keys:'Ctrl+H',         color:'#c084fc', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='h' },
+  { label:'Ver Downloads',    keys:'Ctrl+J',         color:'#4ade80', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='j' },
+  // Arquivos e edição
+  { label:'Renomear Arquivo', keys:'F2',             color:'#f472b6', match:e=>e.key==='F2' },
+  { label:'Apagar Palavra',   keys:'Ctrl+Backspace', color:'#ef4444', match:e=>e.ctrlKey&&e.key==='Backspace' },
+  { label:'Início do Doc',    keys:'Ctrl+Home',      color:'#60a5fa', match:e=>e.ctrlKey&&e.key==='Home' },
+  { label:'Fim do Doc',       keys:'Ctrl+End',       color:'#a3e635', match:e=>e.ctrlKey&&e.key==='End' },
+];
+
+// ─── LEVELS ─────────────────────────────────────────────────────────────────
+const LEVELS = [
+  { name:'Nível 1 — Básico',    ids:[0,1,2,3,6],              count:8,  speed:0.28, interval:2400 },
+  { name:'Nível 2 — Edição',    ids:[4,5,7,17,18,19],         count:10, speed:0.34, interval:2200 },
+  { name:'Nível 3 — Navegador', ids:[10,11,12,13,14,15],      count:12, speed:0.40, interval:2000 },
+  { name:'Nível 4 — Mix',       ids:[0,1,2,3,4,5,6,7,10,11,16], count:14, speed:0.50, interval:1800 },
+  { name:'Nível 5 — MESTRE!',   ids:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], count:18, speed:0.65, interval:1500 },
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let screen = 'menu'; // menu | intro | playing | levelEnd | gameover | win
+let level  = 0, score = 0, lives = 3;
+let enemies = [], particles = [], lasers = [], floatingTexts = [];
+let spawnTimer = 0, spawnInterval = 2400;
+let defeated = 0, needed = 0;
+let introTimer = 0;
+let wrongFlash = 0;
+let totalSpawned = 0;
+
+// Stars background
+const STARS = Array.from({length:140}, () => ({
+  x: Math.random()*W, y: Math.random()*H,
+  r: Math.random()*1.4+.4,
+  speed: Math.random()*.25+.08,
+  opacity: Math.random()*.6+.2,
+}));
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+function roundRect(x,y,w,h,r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+function text(str, x, y, font, color, align='center', glow='') {
+  ctx.save();
+  ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align;
+  if (glow) { ctx.shadowColor=glow; ctx.shadowBlur=18; }
+  ctx.fillText(str, x, y);
+  ctx.restore();
+}
+
+// ─── CLASSES ────────────────────────────────────────────────────────────────
+class Enemy {
+  constructor(sc) {
+    this.sc    = sc;
+    this.w     = Math.max(170, sc.label.length * 11 + sc.keys.length * 9 + 32);
+    this.h     = 58;
+    this.x     = this.w/2 + 20 + Math.random() * (W - this.w - 40);
+    this.y     = -this.h;
+    this.speed = LEVELS[level].speed * (0.85 + Math.random()*.3);
+    this.alive = true;
+    this.dying = false;
+    this.dyeT  = 0;
+    this.wobble= Math.random()*Math.PI*2;
+    this.hit   = false;
+    this.hitT  = 0;
+    this.flash = 0;
+  }
+
+  update(dt) {
+    if (this.dying) { this.dyeT += dt; return; }
+    this.y += this.speed * dt/16;
+    this.wobble += 0.025;
+    if (this.hit) { this.hitT += dt; if(this.hitT > 160) this.hit = false; }
+  }
+
+  draw() {
+    if (this.dying) return;
+    const { x, y, w, h, sc } = this;
+
+    // Glow
+    ctx.save();
+    ctx.shadowColor = sc.color;
+    ctx.shadowBlur  = this.hit ? 28 : 12;
+
+    // Body
+    roundRect(x - w/2, y - h/2, w, h, 10);
+    ctx.fillStyle   = this.hit ? sc.color : '#0f1a2e';
+    ctx.fill();
+    ctx.strokeStyle = sc.color;
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Antennae
+    ctx.strokeStyle = sc.color; ctx.lineWidth = 1.5;
+    for (const ox of [-10, 10]) {
+      ctx.beginPath();
+      ctx.moveTo(x+ox, y-h/2);
+      ctx.lineTo(x+ox + Math.sin(this.wobble+(ox>0?1:0))*5, y-h/2-16);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x+ox + Math.sin(this.wobble+(ox>0?1:0))*5, y-h/2-19, 3.5, 0, Math.PI*2);
+      ctx.fillStyle = sc.color; ctx.fill();
+    }
+
+    // Label (action description)
+    ctx.fillStyle   = this.hit ? '#fff' : '#f8fafc';
+    ctx.font        = 'bold 14px Segoe UI';
+    ctx.textAlign   = 'center';
+    ctx.fillText(sc.label, x, y - 5);
+
+    // Shortcut keys
+    ctx.fillStyle   = sc.color;
+    ctx.font        = 'bold 13px Consolas, monospace';
+    ctx.fillText(sc.keys, x, y + 14);
+
+    ctx.restore();
+  }
+
+  explode() {
+    this.dying = true;
+    this.alive = false;
+    for (let i=0; i<20; i++) particles.push(new Particle(this.x, this.y, this.sc.color));
+  }
+}
+
+class Particle {
+  constructor(x,y,color) {
+    this.x=x; this.y=y; this.color=color;
+    const a = Math.random()*Math.PI*2;
+    const s = 1.5 + Math.random()*4.5;
+    this.vx = Math.cos(a)*s; this.vy = Math.sin(a)*s - 1;
+    this.life = 1;
+    this.decay = 0.018 + Math.random()*.025;
+    this.r = 2 + Math.random()*4;
+  }
+  update() { this.x+=this.vx; this.y+=this.vy; this.vy+=0.12; this.life-=this.decay; }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.life;
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(this.x,this.y, this.r*this.life, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+class Laser {
+  constructor(fx,fy,tx,ty,color) {
+    this.fx=fx;this.fy=fy;this.tx=tx;this.ty=ty;
+    this.color=color; this.life=1;
+  }
+  update() { this.life -= 0.07; }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.life;
+    ctx.strokeStyle = this.color; ctx.lineWidth = 3;
+    ctx.shadowColor = this.color; ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.moveTo(this.fx,this.fy); ctx.lineTo(this.tx,this.ty); ctx.stroke();
+    // Head glow
+    ctx.beginPath(); ctx.arc(this.tx,this.ty,5,0,Math.PI*2);
+    ctx.fillStyle=this.color; ctx.fill();
+    ctx.restore();
+  }
+}
+
+class FloatingText {
+  constructor(x,y,text,color) {
+    this.x=x; this.y=y; this.text=text; this.color=color;
+    this.life=1; this.vy=-1.2;
+  }
+  update() { this.y+=this.vy; this.life-=0.018; }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha=this.life;
+    ctx.fillStyle=this.color; ctx.font='bold 18px Segoe UI';
+    ctx.textAlign='center';
+    ctx.shadowColor=this.color; ctx.shadowBlur=8;
+    ctx.fillText(this.text, this.x, this.y);
+    ctx.restore();
+  }
+}
+
+// ─── PLAYER ─────────────────────────────────────────────────────────────────
+const player = { x: W/2, y: H-48 };
+let playerFlash = 0;
+
+function drawPlayer() {
+  const { x, y } = player;
+  ctx.save();
+  const pulse = 0.7 + Math.sin(Date.now()/300)*0.3;
+  ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 20*pulse;
+
+  // Body
+  ctx.beginPath();
+  ctx.moveTo(x, y-22);
+  ctx.lineTo(x-28, y+14);
+  ctx.lineTo(x-10, y+8);
+  ctx.lineTo(x, y+14);
+  ctx.lineTo(x+10, y+8);
+  ctx.lineTo(x+28, y+14);
+  ctx.closePath();
+  ctx.fillStyle = playerFlash>0 ? '#ef4444' : '#1e3a8a';
+  ctx.fill();
+  ctx.strokeStyle = playerFlash>0 ? '#fca5a5' : '#60a5fa';
+  ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Core
+  ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#93c5fd'; ctx.shadowBlur=12; ctx.fill();
+
+  // Engine glow
+  ctx.beginPath();
+  ctx.arc(x, y+16, 5+Math.random()*3, 0, Math.PI*2);
+  ctx.fillStyle='rgba(251,191,36,.6)'; ctx.shadowColor='#fbbf24'; ctx.shadowBlur=10; ctx.fill();
+
+  ctx.restore();
+}
+
+// ─── BACKGROUND ─────────────────────────────────────────────────────────────
+function drawBg() {
+  ctx.fillStyle = '#060d1a';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(59,130,246,.04)'; ctx.lineWidth=1;
+  for(let x=0;x<W;x+=60){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
+  for(let y=0;y<H;y+=60){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
+
+  // Stars
+  for(const s of STARS) {
+    s.y += s.speed;
+    if(s.y > H) { s.y=-2; s.x=Math.random()*W; }
+    ctx.fillStyle=`rgba(255,255,255,${s.opacity})`;
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+  }
+
+  // Ground line
+  const grad = ctx.createLinearGradient(0,H-32,0,H);
+  grad.addColorStop(0,'rgba(59,130,246,.15)');
+  grad.addColorStop(1,'rgba(59,130,246,0)');
+  ctx.fillStyle=grad; ctx.fillRect(0,H-32,W,32);
+  ctx.strokeStyle='rgba(59,130,246,.35)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,H-32); ctx.lineTo(W,H-32); ctx.stroke();
+}
+
+// ─── HUD ────────────────────────────────────────────────────────────────────
+function drawHUD() {
+  // Top bar bg
+  ctx.fillStyle='rgba(6,13,26,.9)';
+  ctx.fillRect(0,0,W,46);
+  ctx.strokeStyle='rgba(59,130,246,.25)'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,46);ctx.lineTo(W,46);ctx.stroke();
+
+  // Score
+  text(`⚡ ${score}`, 80, 30, 'bold 16px Segoe UI', '#f8fafc', 'left');
+
+  // Level name
+  text(LEVELS[level].name, W/2, 30, 'bold 15px Segoe UI', '#60a5fa', 'center');
+
+  // Lives
+  const hearts = '❤️'.repeat(Math.max(0,lives));
+  text(hearts + (lives<=0?'💀':''), W-20, 30, '18px Segoe UI', '#ef4444', 'right');
+
+  // Progress bar
+  const prog = Math.min(1, defeated/needed);
+  ctx.fillStyle='rgba(59,130,246,.15)'; ctx.fillRect(0,46,W,5);
+  const pgc = ctx.createLinearGradient(0,0,W*prog,0);
+  pgc.addColorStop(0,'#1d4ed8'); pgc.addColorStop(1,'#38bdf8');
+  ctx.fillStyle=pgc; ctx.fillRect(0,46,W*prog,5);
+
+  // Progress label
+  text(`${defeated}/${needed} destruídos`, W-10, 43, '11px Segoe UI', '#64748b', 'right');
+
+  // Bottom hint
+  ctx.fillStyle='rgba(6,13,26,.85)'; ctx.fillRect(0,H-26,W,26);
+  text('Pressione o atalho de teclado para destruir o inimigo correspondente!', W/2, H-10, '12px Segoe UI', '#475569', 'center');
+}
+
+// ─── OVERLAY SCREENS ────────────────────────────────────────────────────────
+function drawMenu() {
+  drawBg();
+
+  // Title
+  ctx.save();
+  ctx.textAlign='center';
+  ctx.font='bold 56px Segoe UI';
+  ctx.fillStyle='#3b82f6'; ctx.shadowColor='#3b82f6'; ctx.shadowBlur=30;
+  ctx.fillText('🚀 Defensor Digital', W/2, 150);
+
+  ctx.font='bold 20px Segoe UI'; ctx.fillStyle='#fbbf24'; ctx.shadowColor='#fbbf24'; ctx.shadowBlur=10;
+  ctx.fillText('Jogo de Atalhos de Teclado', W/2, 195);
+  ctx.shadowBlur=0;
+
+  // Instructions panel
+  roundRect(W/2-280, 225, 560, 170, 14);
+  ctx.fillStyle='rgba(30,58,138,.3)'; ctx.fill();
+  ctx.strokeStyle='rgba(59,130,246,.3)'; ctx.lineWidth=1.5; ctx.stroke();
+
+  const lines = [
+    ['⌨️', 'Os inimigos mostram a ação — pressione o atalho correto'],
+    ['💥', 'Cada inimigo que passa da linha custa uma vida (3 vidas)'],
+    ['🏆', 'Complete os 5 níveis para se tornar um Mestre Digital'],
+    ['📚', 'Os atalhos ficam visíveis — aprenda enquanto joga!'],
+  ];
+  lines.forEach(([ic, tx], i) => {
+    ctx.font='bold 15px Segoe UI'; ctx.fillStyle='#60a5fa'; ctx.textAlign='left';
+    ctx.fillText(ic, W/2-250, 265+i*36);
+    ctx.font='15px Segoe UI'; ctx.fillStyle='#94a3b8';
+    ctx.fillText(tx, W/2-218, 265+i*36);
+  });
+
+  // Start button
+  roundRect(W/2-110, 420, 220, 52, 26);
+  ctx.fillStyle='#1d4ed8'; ctx.shadowColor='#3b82f6'; ctx.shadowBlur=20; ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.font='bold 18px Segoe UI'; ctx.fillStyle='#fff'; ctx.textAlign='center';
+  ctx.fillText('▶  ENTER para Jogar', W/2, 452);
+  ctx.restore();
+}
+
+function drawLevelIntro() {
+  drawBg();
+  ctx.save(); ctx.textAlign='center';
+  ctx.font='bold 48px Segoe UI'; ctx.fillStyle='#f8fafc';
+  ctx.shadowColor='#3b82f6'; ctx.shadowBlur=24;
+  ctx.fillText(LEVELS[level].name, W/2, H/2-30);
+  ctx.shadowBlur=0;
+  ctx.font='20px Segoe UI'; ctx.fillStyle='#64748b';
+  ctx.fillText(`Destrua ${LEVELS[level].count} inimigos usando os atalhos corretos`, W/2, H/2+24);
+  ctx.font='14px Segoe UI'; ctx.fillStyle='#475569';
+  ctx.fillText('Começando em instantes...', W/2, H/2+62);
+  ctx.restore();
+}
+
+function drawLevelEnd() {
+  drawBg();
+  ctx.save(); ctx.textAlign='center';
+  ctx.font='bold 52px Segoe UI'; ctx.fillStyle='#4ade80';
+  ctx.shadowColor='#4ade80'; ctx.shadowBlur=24;
+  ctx.fillText('✅ Nível Completo!', W/2, H/2-50);
+  ctx.shadowBlur=0;
+  ctx.font='22px Segoe UI'; ctx.fillStyle='#94a3b8';
+  ctx.fillText(`Pontuação atual: ${score} pontos`, W/2, H/2+10);
+  ctx.font='bold 16px Segoe UI'; ctx.fillStyle='#3b82f6';
+  const next = level+1 < LEVELS.length ? LEVELS[level+1].name : '🏆 Tela de vitória';
+  ctx.fillText(`Próximo: ${next}`, W/2, H/2+50);
+  ctx.font='16px Segoe UI'; ctx.fillStyle='#475569';
+  ctx.fillText('Pressione ENTER para continuar', W/2, H/2+90);
+  ctx.restore();
+}
+
+function drawGameOver() {
+  drawBg();
+  ctx.save(); ctx.textAlign='center';
+  ctx.font='bold 60px Segoe UI'; ctx.fillStyle='#ef4444';
+  ctx.shadowColor='#ef4444'; ctx.shadowBlur=28;
+  ctx.fillText('💀 Game Over', W/2, H/2-60);
+  ctx.shadowBlur=0;
+  ctx.font='24px Segoe UI'; ctx.fillStyle='#94a3b8';
+  ctx.fillText(`Score final: ${score} pontos`, W/2, H/2+5);
+  ctx.font='16px Segoe UI'; ctx.fillStyle='#64748b';
+  ctx.fillText('Dica: observe os atalhos antes de começar!', W/2, H/2+45);
+  roundRect(W/2-110,H/2+75,220,48,24);
+  ctx.fillStyle='#7f1d1d'; ctx.fill();
+  ctx.strokeStyle='#ef4444'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.font='bold 17px Segoe UI'; ctx.fillStyle='#fff';
+  ctx.fillText('ENTER — Tentar Novamente', W/2, H/2+105);
+  ctx.restore();
+}
+
+function drawWin() {
+  drawBg();
+  ctx.save(); ctx.textAlign='center';
+  ctx.font='bold 60px Segoe UI'; ctx.fillStyle='#fbbf24';
+  ctx.shadowColor='#fbbf24'; ctx.shadowBlur=30;
+  ctx.fillText('🏆 VOCÊ VENCEU!', W/2, H/2-80);
+  ctx.shadowBlur=0;
+  ctx.font='26px Segoe UI'; ctx.fillStyle='#4ade80';
+  ctx.fillText(`Score Final: ${score} pontos`, W/2, H/2-20);
+  ctx.font='20px Segoe UI'; ctx.fillStyle='#94a3b8';
+  ctx.fillText('Você é um verdadeiro Mestre dos Atalhos! 🎓', W/2, H/2+28);
+
+  // Stars decoration
+  for(let i=0;i<5;i++){
+    ctx.font='28px Segoe UI';
+    ctx.fillText('⭐', W/2 - 60 + i*30, H/2+75);
+  }
+
+  roundRect(W/2-110,H/2+110,220,48,24);
+  ctx.fillStyle='#1c3a15'; ctx.fill();
+  ctx.strokeStyle='#4ade80'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.font='bold 17px Segoe UI'; ctx.fillStyle='#fff';
+  ctx.fillText('ENTER — Jogar Novamente', W/2, H/2+140);
+  ctx.restore();
+}
+
+// ─── GAME LOGIC ─────────────────────────────────────────────────────────────
+function startLevel(lvl) {
+  level       = lvl;
+  enemies     = []; particles=[]; lasers=[]; floatingTexts=[];
+  spawnTimer  = 0;
+  spawnInterval = LEVELS[lvl].interval;
+  defeated    = 0;
+  totalSpawned= 0;
+  needed      = LEVELS[lvl].count;
+  playerFlash = 0;
+  screen      = 'intro';
+  introTimer  = 2600;
+}
+
+function resetGame() {
+  score = 0; lives = 3; level = 0;
+  startLevel(0);
+}
+
+function spawnEnemy() {
+  if (totalSpawned >= needed + 3) return; // don't over-spawn
+  const ids   = LEVELS[level].ids;
+  // Avoid duplicate shortcut currently on screen
+  const active= new Set(enemies.filter(e=>e.alive).map(e=>e.sc.keys));
+  let   tries = 0, id;
+  do { id = ids[Math.floor(Math.random()*ids.length)]; tries++; }
+  while (active.has(SC[id].keys) && tries < 20);
+  if (active.has(SC[id].keys)) return;
+  enemies.push(new Enemy(SC[id]));
+  totalSpawned++;
+  spawnTimer = 0;
+}
+
+// ─── INPUT ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  // Prevent browser from capturing most Ctrl combos
+  if (e.ctrlKey || e.key.startsWith('F')) e.preventDefault();
+
+  if (screen==='menu'     && e.key==='Enter') { resetGame(); return; }
+  if (screen==='levelEnd' && e.key==='Enter') {
+    level++;
+    if (level >= LEVELS.length) { screen='win'; return; }
+    startLevel(level); return;
+  }
+  if (screen==='gameover' && e.key==='Enter') { resetGame(); return; }
+  if (screen==='win'      && e.key==='Enter') { resetGame(); return; }
+  if (screen !== 'playing') return;
+
+  let hit = false;
+  for (const en of enemies) {
+    if (!en.alive || en.dying) continue;
+    if (en.sc.match(e)) {
+      en.explode();
+      lasers.push(new Laser(player.x, player.y-22, en.x, en.y, en.sc.color));
+      const bonus = 100;
+      score += bonus;
+      defeated++;
+      floatingTexts.push(new FloatingText(en.x, en.y-30, `+${bonus}  ${en.sc.keys}`, en.sc.color));
+      hit = true;
+      break;
+    }
+  }
+
+  // Wrong key flash (only for ctrl/F combos that don't match)
+  if (!hit && (e.ctrlKey || e.key.startsWith('F')) && e.key !== 'Control' && e.key !== 'Shift') {
+    wrongFlash = 500;
+    floatingTexts.push(new FloatingText(player.x, player.y-40, 'Errado! ❌', '#ef4444'));
+  }
+});
+
+// ─── MAIN LOOP ──────────────────────────────────────────────────────────────
+let last = 0;
+function loop(ts) {
+  const dt = Math.min(ts - last, 50); last = ts;
+
+  if (screen === 'menu')     { drawMenu(); }
+  else if (screen === 'intro') {
+    drawLevelIntro();
+    introTimer -= dt;
+    if (introTimer <= 0) screen = 'playing';
+  }
+  else if (screen === 'levelEnd') { drawLevelEnd(); }
+  else if (screen === 'gameover') { drawGameOver(); }
+  else if (screen === 'win')      { drawWin(); }
+  else { // playing
+    drawBg();
+
+    // Spawn
+    spawnTimer += dt;
+    const maxOnScreen = 4;
+    const alive = enemies.filter(e=>e.alive).length;
+    if (spawnTimer >= spawnInterval && alive < maxOnScreen && totalSpawned < needed+2) {
+      spawnEnemy();
+      // Gradually speed up interval
+      spawnInterval = Math.max(900, spawnInterval - 25);
+    }
+
+    // Update enemies
+    for (const en of enemies) en.update(dt);
+
+    // Check enemies hitting ground
+    for (const en of enemies) {
+      if (en.alive && !en.dying && en.y > H-32) {
+        en.alive = false;
+        lives--;
+        playerFlash = 700;
+        wrongFlash  = 600;
+        for (let i=0;i<10;i++) particles.push(new Particle(en.x, H-32, '#ef4444'));
+        floatingTexts.push(new FloatingText(en.x, H-70, '-1 vida 💀', '#ef4444'));
+        if (lives <= 0) { screen='gameover'; }
+      }
+    }
+
+    // Remove fully dead
+    enemies = enemies.filter(e=>e.alive || (e.dying && e.dyeT<350));
+
+    // Draw layers
+    lasers.forEach(l=>{l.update();l.draw();});   lasers=lasers.filter(l=>l.life>0);
+    enemies.forEach(en=>en.draw());
+    particles.forEach(p=>{p.update();p.draw();}); particles=particles.filter(p=>p.life>0);
+    floatingTexts.forEach(t=>{t.update();t.draw();}); floatingTexts=floatingTexts.filter(t=>t.life>0);
+
+    // Player
+    if (playerFlash>0) playerFlash-=dt;
+    drawPlayer();
+
+    // HUD
+    drawHUD();
+
+    // Wrong flash overlay
+    if (wrongFlash>0) {
+      wrongFlash -= dt;
+      ctx.save(); ctx.globalAlpha=(wrongFlash/500)*.22;
+      ctx.fillStyle='#ef4444'; ctx.fillRect(0,0,W,H);
+      ctx.restore();
+    }
+
+    // Level complete
+    if (defeated >= needed && enemies.filter(e=>e.alive).length===0) {
+      screen = 'levelEnd';
+    }
+  }
+
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
