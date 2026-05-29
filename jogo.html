@@ -55,11 +55,11 @@ const SC = [
   { label:'Selecionar Tudo',  keys:'Ctrl+A',         color:'#06b6d4', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='a' },
   { label:'Salvar',           keys:'Ctrl+S',         color:'#22c55e', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='s' },
   { label:'Buscar',           keys:'Ctrl+F',         color:'#f97316', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='f' },
-  { label:'Novo Arquivo',     keys:'Ctrl+N',         color:'#a78bfa', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='n' },
-  { label:'Imprimir',         keys:'Ctrl+P',         color:'#64748b', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='p' },
+  { label:'Negrito',           keys:'Ctrl+B',         color:'#a78bfa', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='b' },
+  { label:'Itálico',          keys:'Ctrl+I',         color:'#64748b', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='i' },
   // Navegador
-  { label:'Nova Aba',         keys:'Ctrl+T',         color:'#34d399', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='t' },
-  { label:'Fechar Aba',       keys:'Ctrl+W',         color:'#fb7185', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='w' },
+  { label:'Sublinhado',       keys:'Ctrl+U',         color:'#34d399', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='u' },
+  { label:'Fechar Aba',       keys:'Ctrl+Shift+W',   color:'#fb7185', match:e=>e.ctrlKey&&e.shiftKey&&e.key.toLowerCase()==='w' },
   { label:'Atualizar Página', keys:'Ctrl+R',         color:'#38bdf8', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='r' },
   { label:'Favoritar Página', keys:'Ctrl+D',         color:'#fbbf24', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='d' },
   { label:'Ver Histórico',    keys:'Ctrl+H',         color:'#c084fc', match:e=>e.ctrlKey&&!e.shiftKey&&e.key.toLowerCase()==='h' },
@@ -499,9 +499,13 @@ function spawnEnemy() {
 }
 
 // ─── INPUT ──────────────────────────────────────────────────────────────────
+// capture:true garante que preventDefault() age antes do navegador processar
 document.addEventListener('keydown', e => {
-  // Prevent browser from capturing most Ctrl combos
-  if (e.ctrlKey || e.key.startsWith('F')) e.preventDefault();
+  // Bloqueia ação nativa do browser para TODOS os Ctrl+key e teclas F
+  if (e.ctrlKey || e.altKey || e.key.startsWith('F')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
   if (screen==='menu'     && e.key==='Enter') { resetGame(); return; }
   if (screen==='levelEnd' && e.key==='Enter') {
@@ -533,7 +537,7 @@ document.addEventListener('keydown', e => {
     wrongFlash = 500;
     floatingTexts.push(new FloatingText(player.x, player.y-40, 'Errado! ❌', '#ef4444'));
   }
-});
+}, true); // capture phase — previne ação do navegador antes do evento chegar à página
 
 // ─── MAIN LOOP ──────────────────────────────────────────────────────────────
 let last = 0;
